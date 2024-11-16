@@ -1,10 +1,393 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Interactive Rasterization Algorithms</title>
+            <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                }
+                #graph {
+                    width: 80%;
+                    height: 500px;
+                    margin: auto;
+                }
+                #controls {
+                    text-align: center;
+                    margin: 20px;
+                }
+                input {
+                    width: 50px;
+                    margin: 5px;
+                }
+                #timeTaken {
+                    font-size: 16px;
+                    text-align: center;
+                    margin-top: 20px;
+                }
+            </style>
+        </head>
+        <body>
+
+        <h1 style="text-align:center;">Interactive Rasterization Algorithms</h1>
+
+        <div id="controls">
+            <!-- Ввод значений для алгоритмов -->
+            <div>
+                <label for="x0">X0:</label>
+                <input type="number" id="x0" value="0">
+                <label for="y0">Y0:</label>
+                <input type="number" id="y0" value="0">
+                <label for="x1">X1:</label>
+                <input type="number" id="x1" value="8">
+                <label for="y1">Y1:</label>
+                <input type="number" id="y1" value="6">
+            </div>
+            <div>
+                <label for="radius">Radius:</label>
+                <input type="number" id="radius" value="5">
+            </div>
+            <button onclick="drawDDA()">Алгоритм ЦДА</button>
+            <button onclick="drawBresenham()">Алгоритм Брезенхема</button>
+            <button onclick="drawBresenhamCircle()">Брезенхем (окружность)</button>
+            <button onclick="drawStepByStep()">Пошаговый Алгоритм</button>
+            <button onclick="drawWu()">Алгоритм Ву</button>
+        </div>
+
+        <div id="graph"></div>
+        <div id="timeTaken"></div>
+
+        <script>
+            function measureExecutionTime(callback, iterations = 10000) {
+    let start = performance.now();
+    for (let i = 0; i < iterations; i++) {
+        callback();
+    }
+    let end = performance.now();
+    return (end - start) / iterations; // Среднее время одного запуска
+}
+
+function displayTime(time) {
+    document.getElementById('timeTaken').innerHTML = `Среднее время работы: ${time.toFixed(4)} ms`;
+}
+
+function drawDDA() {
+    let x0 = parseInt(document.getElementById('x0').value);
+    let y0 = parseInt(document.getElementById('y0').value);
+    let x1 = parseInt(document.getElementById('x1').value);
+    let y1 = parseInt(document.getElementById('y1').value);
+
+    let averageTime = measureExecutionTime(() => DDAAlgorithm(x0, y0, x1, y1));
+    let points = DDAAlgorithm(x0, y0, x1, y1);
+
+    let trace = {
+        x: points.map(p => p[0]),
+        y: points.map(p => p[1]),
+        mode: 'markers+lines',
+        type: 'scatter',
+        name: 'DDA Line'
+    };
+    Plotly.react('graph', [trace], { margin: { t: 0 } });
+
+    displayTime(averageTime);
+}
+
+function drawBresenham() {
+    let x0 = parseInt(document.getElementById('x0').value);
+    let y0 = parseInt(document.getElementById('y0').value);
+    let x1 = parseInt(document.getElementById('x1').value);
+    let y1 = parseInt(document.getElementById('y1').value);
+
+    let averageTime = measureExecutionTime(() => BresenhamLine(x0, y0, x1, y1));
+    let points = BresenhamLine(x0, y0, x1, y1);
+
+    let trace = {
+        x: points.map(p => p[0]),
+        y: points.map(p => p[1]),
+        mode: 'markers+lines',
+        type: 'scatter',
+        name: 'Bresenham Line'
+    };
+    Plotly.react('graph', [trace], { margin: { t: 0 } });
+
+    displayTime(averageTime);
+}
+
+function drawBresenhamCircle() {
+    let r = parseInt(document.getElementById('radius').value);
+    let xc = 0;
+    let yc = 0;
+
+    let averageTime = measureExecutionTime(() => BresenhamCircle(xc, yc, r));
+    let points = BresenhamCircle(xc, yc, r);
+
+    let trace = {
+        x: points.map(p => p[0]),
+        y: points.map(p => p[1]),
+        mode: 'markers',
+        type: 'scatter',
+        name: 'Bresenham Circle'
+    };
+    Plotly.react('graph', [trace], { margin: { t: 0 } });
+
+    displayTime(averageTime);
+}
+
+function drawStepByStep() {
+    let x0 = parseInt(document.getElementById('x0').value);
+    let y0 = parseInt(document.getElementById('y0').value);
+    let x1 = parseInt(document.getElementById('x1').value);
+    let y1 = parseInt(document.getElementById('y1').value);
+
+    let averageTime = measureExecutionTime(() => stepByStepAlgorithm(x0, y0, x1, y1, 1));
+    let points = stepByStepAlgorithm(x0, y0, x1, y1, 1);
+
+    let trace = {
+        x: points.map(p => p[0]),
+        y: points.map(p => p[1]),
+        mode: 'markers+lines',
+        type: 'scatter',
+        name: 'Step-by-Step'
+    };
+    Plotly.react('graph', [trace], { margin: { t: 0 } });
+
+    displayTime(averageTime);
+}
+
+function drawWu() {
+    let x0 = parseInt(document.getElementById('x0').value);
+    let y0 = parseInt(document.getElementById('y0').value);
+    let x1 = parseInt(document.getElementById('x1').value);
+    let y1 = parseInt(document.getElementById('y1').value);
+
+    let averageTime = measureExecutionTime(() => WuLine(x0, y0, x1, y1));
+    let points = WuLine(x0, y0, x1, y1);
+
+    let trace = {
+        x: points.map(p => p[0]),
+        y: points.map(p => p[1]),
+        mode: 'markers+lines',
+        type: 'scatter',
+        marker: { size: 8, color: points.map(p => `rgba(0, 0, 0, ${p[2]})`) },
+        name: 'Wu Line'
+    };
+    Plotly.react('graph', [trace], { margin: { t: 0 } });
+
+    displayTime(averageTime);
+}
+
+
+            function initializeGraph() {
+                var layout = {
+                    xaxis: {
+                        title: 'X Axis',
+                        showgrid: true,
+                        zeroline: true,
+                        range: [-15, 15],  // Расширенный диапазон для отображения линий
+                        dtick: 1
+                    },
+                    yaxis: {
+                        title: 'Y Axis',
+                        showgrid: true,
+                        zeroline: true,
+                        range: [-15, 15],  // Расширенный диапазон для отображения линий
+                        dtick: 1
+                    },
+                    margin: { t: 0 },
+                    dragmode: 'pan',
+                    hovermode: 'closest'
+                };
+
+                Plotly.newPlot('graph', [], layout);
+            }
+
+            function displayTime(time) {
+                document.getElementById('timeTaken').innerHTML = `Время работы: ${time.toFixed(4)} ms`;
+            }
+
+
+            function DDAAlgorithm(x0, y0, x1, y1) {
+                let points = [];
+                let dx = x1 - x0;
+                let dy = y1 - y0;
+                let steps = Math.max(Math.abs(dx), Math.abs(dy));
+                let xIncrement = dx / steps;
+                let yIncrement = dy / steps;
+                let x = x0;
+                let y = y0;
+
+                for (let i = 0; i <= steps; i++) {
+                    points.push([Math.round(x), Math.round(y)]);
+                    x += xIncrement;
+                    y += yIncrement;
+                }
+                return points;
+            }
+
+            function BresenhamLine(x0, y0, x1, y1) {
+                let points = [];
+                let dx = Math.abs(x1 - x0);
+                let dy = Math.abs(y1 - y0);
+                let sx = x0 < x1 ? 1 : -1;
+                let sy = y0 < y1 ? 1 : -1;
+                let err = dx - dy;
+
+                while (true) {
+                    points.push([x0, y0]);
+                    if (x0 === x1 && y0 === y1) break;
+                    let e2 = err * 2;
+                    if (e2 > -dy) { err -= dy; x0 += sx; }
+                    if (e2 < dx) { err += dx; y0 += sy; }
+                }
+                return points;
+            }
+
+            function BresenhamCircle(xc, yc, r) {
+                let points = [];
+                let x = 0;
+                let y = r;
+                let d = 3 - 2 * r;
+
+                while (y >= x) {
+                    points.push([xc + x, yc + y]);
+                    points.push([xc - x, yc + y]);
+                    points.push([xc + x, yc - y]);
+                    points.push([xc - x, yc - y]);
+                    points.push([xc + y, yc + x]);
+                    points.push([xc - y, yc + x]);
+                    points.push([xc + y, yc - x]);
+                    points.push([xc - y, yc - x]);
+
+                    x++;
+                    if (d > 0) {
+                        y--;
+                        d = d + 4 * (x - y) + 10;
+                    } else {
+                        d = d + 4 * x + 6;
+                    }
+                }
+                return points;
+            }
+
+            function stepByStepAlgorithm(x0, y0, x1, y1, increment) {
+                let points = [];
+                let dx = x1 - x0;
+                let dy = y1 - y0;
+                let x = x0;
+                let y = y0;
+                let steps = Math.max(Math.abs(dx), Math.abs(dy));
+                let dxIncrement = dx / steps;
+                let dyIncrement = dy / steps;
+
+                while (Math.abs(x - x1) > increment || Math.abs(y - y1) > increment) {
+                    points.push([x, y]);
+                    x += dxIncrement;
+                    y += dyIncrement;
+                }
+                points.push([x1, y1]);
+                return points;
+            }
+    function drawWu() {
+        let x0 = parseInt(document.getElementById('x0').value);
+        let y0 = parseInt(document.getElementById('y0').value);
+        let x1 = parseInt(document.getElementById('x1').value);
+        let y1 = parseInt(document.getElementById('y1').value);
+
+        let start = performance.now();
+        let points = WuLine(x0, y0, x1, y1);
+        let end = performance.now();
+
+        let trace = {
+            x: points.map(p => p[0]),
+            y: points.map(p => p[1]),
+            mode: 'markers+lines',
+            type: 'scatter',
+            marker: { size: 8, color: points.map(p => `rgba(0, 0, 0, ${p[2]})`) }, // Использование прозрачности
+            name: 'Wu Line'
+        };
+        Plotly.react('graph', [trace], { margin: { t: 0 } });
+
+        let timeTaken = end - start;
+        displayTime(timeTaken);
+    }
+
+    function WuLine(x0, y0, x1, y1) {
+        let points = [];
+
+        function plot(x, y, c) {
+            points.push([x, y, c]); // Добавляем прозрачность как третий элемент
+        }
+
+        function fpart(x) {
+            return x - Math.floor(x);
+        }
+
+        function rfpart(x) {
+            return 1 - fpart(x);
+        }
+
+        let steep = Math.abs(y1 - y0) > Math.abs(x1 - x0);
+        if (steep) {
+            [x0, y0] = [y0, x0];
+            [x1, y1] = [y1, x1];
+        }
+        if (x0 > x1) {
+            [x0, x1] = [x1, x0];
+            [y0, y1] = [y1, y0];
+        }
+
+        let dx = x1 - x0;
+        let dy = y1 - y0;
+        let gradient = dy / dx;
+
+        // Первая точка
+        let xEnd = Math.round(x0);
+        let yEnd = y0 + gradient * (xEnd - x0);
+        let xGap = rfpart(x0 + 0.5);
+        let xPixel1 = xEnd;
+        let yPixel1 = Math.floor(yEnd);
+        if (steep) {
+            plot(yPixel1, xPixel1, rfpart(yEnd) * xGap);
+            plot(yPixel1 + 1, xPixel1, fpart(yEnd) * xGap);
+        } else {
+            plot(xPixel1, yPixel1, rfpart(yEnd) * xGap);
+            plot(xPixel1, yPixel1 + 1, fpart(yEnd) * xGap);
+        }
+        let intery = yEnd + gradient;
+
+        // Центральные точки
+        for (let x = xPixel1 + 1; x < x1; x++) {
+            if (steep) {
+                plot(Math.floor(intery), x, rfpart(intery));
+                plot(Math.floor(intery) + 1, x, fpart(intery));
+            } else {
+                plot(x, Math.floor(intery), rfpart(intery));
+                plot(x, Math.floor(intery) + 1, fpart(intery));
+            }
+            intery += gradient;
+        }
+
+        // Последняя точка
+        xEnd = Math.round(x1);
+        yEnd = y1 + gradient * (xEnd - x1);
+        xGap = fpart(x1 + 0.5);
+        let xPixel2 = xEnd;
+        let yPixel2 = Math.floor(yEnd);
+        if (steep) {
+            plot(yPixel2, xPixel2, rfpart(yEnd) * xGap);
+            plot(yPixel2 + 1, xPixel2, fpart(yEnd) * xGap);
+        } else {
+            plot(xPixel2, yPixel2, rfpart(yEnd) * xGap);
+            plot(xPixel2, yPixel2 + 1, fpart(yEnd) * xGap);
+        }
+
+        return points;
+    }
+
+            initializeGraph();
+        </script>
+
+        </body>
+        </html>
